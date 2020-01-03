@@ -6,16 +6,16 @@ services:
     build: .
     container_name: app
     entrypoint: dockerize -template ./.docker/app/.env:.env -wait tcp://db:3306 -timeout 40s ./.docker/entrypoint.sh
-    environment: 
+    environment:
       - DB_HOST=db
       - DB_DATABASE=laravel
       - DB_USERNAME=root
       - DB_PASSWORD=root
-    volumes: 
+    volumes:
       - .:/var/www
-    networks: 
+    networks:
       - app-network
-    depends_on: 
+    depends_on:
       - db
       - redis
 
@@ -23,13 +23,17 @@ services:
   nginx:
     build: .docker/nginx
     container_name: nginx
+    entrypoint: dockerize -template /etc/nginx/conf.d/nginx.conf:/etc/nginx/conf.d/nginx.conf nginx -g "daemon off;"
+    environment:
+      - NGINX_HOST=app
+      - NGINX_PORT=9000
     restart: always
     tty: true
     ports:
       - "8000:80"
     volumes:
       - .:/var/www
-    networks: 
+    networks:
       - app-network
     depends_on:
       - app
@@ -42,23 +46,22 @@ services:
     tty: true
     ports:
       - "33006:3306"
-    environment: 
+    environment:
       - MYSQL_DATABASE=laravel
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_USER=root
     volumes:
       - ./.docker/dbdata:/var/lib/mysql
-    networks: 
+    networks:
       - app-network
-    
+
   redis:
     image: redis:alpine
-    expose: 
+    expose:
       - 6379
-    networks: 
+    networks:
       - app-network
-          
-networks: 
+
+networks:
   app-network:
     driver: bridge
-  
